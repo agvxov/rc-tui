@@ -1,5 +1,7 @@
 #include "tui.hpp"
 
+#define TUI_BANNER "| Open-rc TUI |"
+
 static void tui_services();
 
 
@@ -7,6 +9,7 @@ static void tui_services();
 static bool tui_running;
 
 static size_t scrw, scrh;
+static size_t selection = 0;
 
 static WINDOW* wmain;
 static WINDOW* whelpbar;
@@ -28,6 +31,7 @@ bool tui_init(){
 
 	//
 	box(wmain, '|', '-');
+	mvwaddstr(wmain, 0, (scrw-(sizeof(TUI_BANNER)-1))/2, TUI_BANNER);
 	wrefresh(wmain);
 	waddstr(whelpbar, "test");
 	wrefresh(whelpbar);
@@ -47,10 +51,16 @@ void tui_quit(){
 
 static void tui_services(){
 	int lineno = 0;
-	for(auto i : services){
-		char* h = i->pretty_render(scrw-2);
-		mvwaddstr(wmain, lineno+1, 1, h);
+	for(int i = 0; i < services.size(); i++){
+		char* buf = services[i]->pretty_render(scrw-2);
+		if(i == selection){
+			wattron(wmain, A_REVERSE | A_BOLD);
+		}
+		mvwaddstr(wmain, lineno+1, 1, buf);
+		if(i == selection){
+			wattroff(wmain, A_REVERSE | A_BOLD);
+		}
 		++lineno;
-		delete h;
+		delete buf;
 	}
 }
