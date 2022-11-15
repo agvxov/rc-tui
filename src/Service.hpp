@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 struct Service {
 	std::string name;

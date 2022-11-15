@@ -750,7 +750,7 @@ case 1:
 YY_RULE_SETUP
 #line 14 "src//rc_lexer.l"
 {
-									printf("new runlevel: %s\n", yytext);
+									//printf("new runlevel: %s\n", yytext);
 									runlevel = yytext;
 								}
 	YY_BREAK
@@ -758,7 +758,7 @@ case 2:
 YY_RULE_SETUP
 #line 18 "src//rc_lexer.l"
 {
-									printf("service found: %s", yytext);
+									//printf("service found: %s", yytext);
 									services.push_back(new Service);
 									services.back()->name = yytext; 
 									services.back()->runlevel = runlevel;
@@ -774,7 +774,7 @@ case 4:
 YY_RULE_SETUP
 #line 26 "src//rc_lexer.l"
 { BEGIN INITIAL;
-									printf(" whichs status is: %s\n", yytext);
+									//printf(" whichs status is: %s\n", yytext);
 									services.back()->status = yytext;
 								}
 	YY_BREAK
