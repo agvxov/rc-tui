@@ -16,6 +16,9 @@ static WINDOW* whelpbar;
 bool tui_init(){
 	initscr();
 
+	noecho();
+	curs_set(0);
+
 	getmaxyx(stdscr, scrh, scrw);
 
 	wmain = newwin(scrh-1, scrw, 0, 0);

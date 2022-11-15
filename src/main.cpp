@@ -19,11 +19,8 @@ bool running = init();
 signed main(int argc, char* argv[]){
 	if(not running){ return 1; }
 
-	for(auto i : services){
-		puts(i->pretty_render(80));
+	while(true){
 	}
-	//while(true){
-	//}
 
 	return 0;
 }
@@ -64,7 +61,7 @@ bool init(){
 	signal(SIGTERM, quit);
 
 	// ### Init ncurses ###
-	//if(not tui_init()){ return false; }
+	if(not tui_init()){ return false; }
 
 	return true;
 }

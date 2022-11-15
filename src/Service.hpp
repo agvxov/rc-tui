@@ -20,13 +20,13 @@ struct Service {
 
 		asprintf(
 					&r,
-					"%s%*s%*s %*s",
+					"%s%*s%*s%*s",
 					this->name.c_str(),
-					(int)(width-(this->name.size()+MAX_RUNLEVEL_LEN+MAX_STATUS_LEN)),
+					(int)(width-(this->name.size()+MAX_RUNLEVEL_LEN+MAX_STATUS_LEN+1)),
 					" ",
 					MAX_RUNLEVEL_LEN,
 					this->runlevel.c_str(),
-					MAX_STATUS_LEN,
+					MAX_STATUS_LEN+1,
 					this->status.c_str()
 				);
 
