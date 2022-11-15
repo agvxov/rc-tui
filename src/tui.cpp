@@ -24,13 +24,16 @@ bool tui_init(){
 
 	getmaxyx(stdscr, scrh, scrw);
 
+	start_color();
+	init_pair(1, COLOR_WHITE, COLOR_RED);
+
 	wmain = newwin(scrh-1, scrw, 0, 0);
 	whelpbar = newwin(1, scrw, scrh-1, 0);
 
 	refresh();
 
 	//
-	box(wmain, '|', '-');
+	box(wmain, 0, 0);
 	mvwaddstr(wmain, 0, (scrw-(sizeof(TUI_BANNER)-1))/2, TUI_BANNER);
 	wrefresh(wmain);
 	waddstr(whelpbar, "test");
@@ -54,11 +57,11 @@ static void tui_services(){
 	for(int i = 0; i < services.size(); i++){
 		char* buf = services[i]->pretty_render(scrw-2);
 		if(i == selection){
-			wattron(wmain, A_REVERSE | A_BOLD);
+			wattron(wmain, A_BOLD | COLOR_PAIR(1));
 		}
 		mvwaddstr(wmain, lineno+1, 1, buf);
 		if(i == selection){
-			wattroff(wmain, A_REVERSE | A_BOLD);
+			wattroff(wmain, A_BOLD | COLOR_PAIR(1));
 		}
 		++lineno;
 		delete buf;
