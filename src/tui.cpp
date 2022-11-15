@@ -1,11 +1,17 @@
 #include "tui.hpp"
 
+static void tui_services();
+
+
+
 static bool tui_running;
 
 static size_t scrw, scrh;
 
 static WINDOW* wmain;
 static WINDOW* whelpbar;
+
+
 
 bool tui_init(){
 	initscr();
@@ -23,7 +29,9 @@ bool tui_init(){
 	waddstr(whelpbar, "test");
 	wrefresh(whelpbar);
 	//
-	refresh();
+	//
+	tui_services();
+	wrefresh(wmain);
 
 	tui_running = true;
 	return true;
@@ -32,4 +40,14 @@ bool tui_init(){
 void tui_quit(){
 	if(not tui_running){ return; }
 	endwin();
+}
+
+static void tui_services(){
+	int lineno = 0;
+	for(auto i : services){
+		char* h = i->pretty_render(scrw-2);
+		mvwaddstr(wmain, lineno+1, 1, h);
+		++lineno;
+		delete h;
+	}
 }

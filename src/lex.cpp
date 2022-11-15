@@ -761,45 +761,47 @@ YY_RULE_SETUP
 									//printf("service found: %s", yytext);
 									services.push_back(new Service);
 									services.back()->name = yytext; 
+									services.back()->name = '[' + services.back()->name + ']'; 
 									services.back()->runlevel = runlevel;
 								}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 24 "src//rc_lexer.l"
+#line 25 "src//rc_lexer.l"
 { BEGIN STATUS;
 								}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 26 "src//rc_lexer.l"
+#line 27 "src//rc_lexer.l"
 { BEGIN INITIAL;
 									//printf(" whichs status is: %s\n", yytext);
 									services.back()->status = yytext;
+									services.back()->status = '[' + services.back()->status + ']'; 
 								}
 	YY_BREAK
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-#line 30 "src//rc_lexer.l"
+#line 32 "src//rc_lexer.l"
 {  }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 31 "src//rc_lexer.l"
+#line 33 "src//rc_lexer.l"
 {  }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 32 "src//rc_lexer.l"
+#line 34 "src//rc_lexer.l"
 { yyerror(yytext); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 34 "src//rc_lexer.l"
+#line 36 "src//rc_lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 802 "src//lex.cpp"
+#line 804 "src//lex.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(STATUS):
 	yyterminate();
@@ -1808,6 +1810,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 34 "src//rc_lexer.l"
+#line 36 "src//rc_lexer.l"
 
 

@@ -13,14 +13,17 @@ using namespace std;
 bool init();
 [[ noreturn ]] void quit(int ignore);
 
+inline std::vector<Service*> services;
 bool running = init();
-std::vector<Service*> services;
 
 signed main(int argc, char* argv[]){
 	if(not running){ return 1; }
 
-	while(true){
+	for(auto i : services){
+		puts(i->pretty_render(80));
 	}
+	//while(true){
+	//}
 
 	return 0;
 }
@@ -61,7 +64,7 @@ bool init(){
 	signal(SIGTERM, quit);
 
 	// ### Init ncurses ###
-	if(not tui_init()){ return false; }
+	//if(not tui_init()){ return false; }
 
 	return true;
 }
