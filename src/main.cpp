@@ -19,7 +19,11 @@ bool running = init();
 signed main(int argc, char* argv[]){
 	if(not running){ return 1; }
 
+	tui_display();
 	while(true){
+		if(tui_control(getch())){
+			tui_display();
+		}
 	}
 
 	return 0;

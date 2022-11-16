@@ -2,17 +2,17 @@
 
 #define TUI_BANNER "| Open-rc TUI |"
 
-static void tui_services();
-
 
 
 static bool tui_running;
 
 static size_t scrw, scrh;
 static size_t selection = 0;
+static size_t cursor = 0;
+static size_t state = 0;
 
-static WINDOW* wmain;
-static WINDOW* whelpbar;
+inline WINDOW* wmain;
+inline WINDOW* whelpbar;
 
 
 
@@ -25,23 +25,13 @@ bool tui_init(){
 	getmaxyx(stdscr, scrh, scrw);
 
 	start_color();
-	init_pair(1, COLOR_WHITE, COLOR_RED);
+	init_pair(1, COLOR_WHITE, COLOR_RED);	// Selection
+	init_pair(2, COLOR_BLACK, COLOR_WHITE);	// Help
 
 	wmain = newwin(scrh-1, scrw, 0, 0);
 	whelpbar = newwin(1, scrw, scrh-1, 0);
 
 	refresh();
-
-	//
-	box(wmain, 0, 0);
-	mvwaddstr(wmain, 0, (scrw-(sizeof(TUI_BANNER)-1))/2, TUI_BANNER);
-	wrefresh(wmain);
-	waddstr(whelpbar, "test");
-	wrefresh(whelpbar);
-	//
-	//
-	tui_services();
-	wrefresh(wmain);
 
 	tui_running = true;
 	return true;
@@ -52,7 +42,7 @@ void tui_quit(){
 	endwin();
 }
 
-static void tui_services(){
+void tui_services(){
 	int lineno = 0;
 	for(int i = 0; i < services.size(); i++){
 		char* buf = services[i]->pretty_render(scrw-2);
@@ -66,4 +56,49 @@ static void tui_services(){
 		++lineno;
 		delete buf;
 	}
+}
+
+static const char** HELP_MSG[] = {
+							(char const *[]){"Down [j]", "Up [k]", "Next [h]", "Previous [l]", "Modify [\\n]", NULL}
+						};
+
+void tui_help(){
+	werase(whelpbar);
+	for(int i = 0; HELP_MSG[state][i] != NULL; i++){
+		waddch(whelpbar, ' ');
+		wattron(whelpbar, COLOR_PAIR(2));
+		waddstr(whelpbar, HELP_MSG[state][i]);
+		wattroff(whelpbar, COLOR_PAIR(2));
+	}
+}
+
+bool tui_control(const char &c){
+	switch(c){
+		case 'j':
+			if(selection < services.size()-1){
+				++selection;
+			}else{
+				selection = 0;
+			}
+			return true;
+		case 'k':
+			if(selection > 0){
+				--selection;
+			}else{
+				selection = services.size()-1;
+			}
+			return true;
+	}
+
+	return false;
+}
+
+void tui_display(){
+	box(wmain, 0, 0);
+	mvwaddstr(wmain, 0, (scrw-(sizeof(TUI_BANNER)-1))/2, TUI_BANNER);
+	tui_services();
+	tui_help();
+	//
+	wrefresh(wmain);
+	wrefresh(whelpbar);
 }
