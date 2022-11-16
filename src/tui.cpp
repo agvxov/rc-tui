@@ -17,6 +17,7 @@ static size_t cursor = CUR_STATUS;
 static size_t state = 0;
 
 inline WINDOW* wmain;
+inline WINDOW* wmaind;
 inline WINDOW* whelpbar;
 
 enum {
@@ -24,6 +25,10 @@ enum {
 	COLOR_PAIR_CURSOR,
 	COLOR_PAIR_HELP
 };
+
+int windoww(WINDOW* w){
+	return (w->_maxx+1 - w->_begx)+1;
+}
 
 bool tui_init(){
 	initscr();
@@ -39,6 +44,7 @@ bool tui_init(){
 	init_pair(COLOR_PAIR_HELP, COLOR_BLACK, COLOR_WHITE);
 
 	wmain = newwin(scrh-1, scrw, 0, 0);
+	wmaind = newwin(scrh-1-2, scrw-2, 1, 1);
 	whelpbar = newwin(1, scrw, scrh-1, 0);
 
 	refresh();
@@ -53,37 +59,38 @@ void tui_quit(){
 }
 
 void tui_services(){
-	int lineno = 0;
+	wmove(wmaind, 0, 0);
 	for(int i = 0; i < services.size(); i++){
 		char* buf = services[i]->pretty_render(scrw-2);
 		if(i == selection) [[ unlikely ]] {
-			int cur_start, cur_len;
+			int cur_start,
+				cur_len;
+			int winw = windoww(wmaind);
 			switch(cursor){
 				case CUR_RUNLEVEL:
-					cur_start = scrw - (services[i]->status.size()+1 + services[i]->runlevel.size()+1 + 2);
+					cur_start = winw - (services[i]->status.size()+1 + services[i]->runlevel.size()+1);
 					cur_len = services[i]->runlevel.size();
 					break;
 				case CUR_STATUS:
-					cur_start = scrw - (services[i]->status.size() + 2);
+					cur_start = winw - (services[i]->status.size());
 					cur_len = services[i]->status.size();
 					break;
 			}
 			// Print til cur
-			wattron(wmain, A_BOLD | COLOR_PAIR(COLOR_PAIR_SELECTION));
-			mvwaddnstr(wmain, lineno+1, 1, buf, cur_start);
-			wattroff(wmain, COLOR_PAIR(COLOR_PAIR_SELECTION));
+			wattron(wmaind, A_BOLD | COLOR_PAIR(COLOR_PAIR_SELECTION));
+			waddnstr(wmaind, buf, cur_start);
+			wattroff(wmaind, COLOR_PAIR(COLOR_PAIR_SELECTION));
 			// Print cur
-			wattron(wmain, COLOR_PAIR(COLOR_PAIR_CURSOR));
-			waddnstr(wmain, buf+cur_start, cur_len);
-			wattroff(wmain, COLOR_PAIR(COLOR_PAIR_CURSOR));
+			wattron(wmaind, COLOR_PAIR(COLOR_PAIR_CURSOR));
+			waddnstr(wmaind, buf+cur_start, cur_len);
+			wattroff(wmaind, COLOR_PAIR(COLOR_PAIR_CURSOR));
 			// Print rem
-			wattron(wmain, COLOR_PAIR(COLOR_PAIR_SELECTION));
-			waddstr(wmain, buf+cur_start+cur_len);
-			wattroff(wmain, A_BOLD | COLOR_PAIR(COLOR_PAIR_SELECTION));
+			wattron(wmaind, COLOR_PAIR(COLOR_PAIR_SELECTION));
+			waddstr(wmaind, buf+cur_start+cur_len);
+			wattroff(wmaind, A_BOLD | COLOR_PAIR(COLOR_PAIR_SELECTION));
 		}else [[ likely ]] {
-			mvwaddstr(wmain, lineno+1, 1, buf);
+			waddstr(wmaind, buf);
 		}
-		++lineno;
 		delete buf;
 	}
 }
@@ -176,12 +183,18 @@ bool tui_control(const char &c){
 	return false;
 }
 
-void tui_display(){
+void tui_redraw(){
 	box(wmain, 0, 0);
 	mvwaddstr(wmain, 0, (scrw-(sizeof(TUI_BANNER)-1))/2, TUI_BANNER);
+
+	wrefresh(wmain);
+	tui_draw();
+}
+
+void tui_draw(){
 	tui_services();
 	tui_help();
 	//
-	wrefresh(wmain);
+	wrefresh(wmaind);
 	wrefresh(whelpbar);
 }
