@@ -1,24 +1,30 @@
 #include "tui.hpp"
 
+
 #define TUI_BANNER "| Open-rc TUI |"
-
-
 
 static bool tui_running;
 
 static size_t scrw, scrh;
-static size_t selection = 0;
 enum {
 	CUR_RUNLEVEL,
 	CUR_STATUS,
 	CUR_ENUM_END
 };
 static size_t cursor = CUR_STATUS;
+static size_t selection = 0;
 static size_t state = 0;
 
-inline WINDOW* wmain;
-inline WINDOW* wmaind;
-inline WINDOW* whelpbar;
+enum {
+	CONTROL_INITIAL,
+	CONTROL_CMD_MENU
+};
+static int control = CONTROL_INITIAL;
+
+static WINDOW* wmain;
+static WINDOW* wmaind;
+static WINDOW* whelpbar;
+static MENU* cmd_menu;
 
 enum {
 	COLOR_PAIR_SELECTION = 1,
@@ -26,7 +32,8 @@ enum {
 	COLOR_PAIR_HELP
 };
 
-int windoww(WINDOW* w){
+
+static inline int windoww(WINDOW* w){
 	return (w->_maxx+1 - w->_begx)+1;
 }
 
@@ -58,7 +65,7 @@ void tui_quit(){
 	endwin();
 }
 
-void tui_services(){
+static void tui_render_services(){
 	wmove(wmaind, 0, 0);
 	for(int i = 0; i < services.size(); i++){
 		char* buf = services[i]->pretty_render(scrw-2);
@@ -96,10 +103,9 @@ void tui_services(){
 }
 
 static const char** HELP_MSG[] = {
-							(char const *[]){"Down [j]", "Up [k]", "Next [h]", "Previous [l]", "Modify [\\n]", NULL}
-						};
-
-void tui_help(){
+		(char const *[]){"Down [j]", "Up [k]", "Next [h]", "Previous [l]", "Modify [\\n]", NULL}
+	};
+static void tui_render_help(){
 	werase(whelpbar);
 	for(int i = 0; HELP_MSG[state][i] != NULL; i++){
 		waddch(whelpbar, ' ');
@@ -109,14 +115,7 @@ void tui_help(){
 	}
 }
 
-enum {
-	CONTROL_INITIAL,
-	CONTROL_CMD_MENU
-};
-static int control = CONTROL_INITIAL;
-static MENU* cmd_menu;
-
-bool tui_service_command_menu(const char &c){
+static bool tui_control_status_menu(const char &c){
 	switch(c){
 		case 'j':
 			menu_driver(cmd_menu, REQ_DOWN_ITEM);
@@ -176,7 +175,7 @@ bool tui_control(const char &c){
 			}
 			return false;
 		case CONTROL_CMD_MENU:
-			tui_service_command_menu(c);
+			tui_control_status_menu(c);
 			return false;
 	}
 
@@ -186,14 +185,15 @@ bool tui_control(const char &c){
 void tui_redraw(){
 	box(wmain, 0, 0);
 	mvwaddstr(wmain, 0, (scrw-(sizeof(TUI_BANNER)-1))/2, TUI_BANNER);
-
+	//
 	wrefresh(wmain);
+	//
 	tui_draw();
 }
 
 void tui_draw(){
-	tui_services();
-	tui_help();
+	tui_render_services();
+	tui_render_help();
 	//
 	wrefresh(wmaind);
 	wrefresh(whelpbar);

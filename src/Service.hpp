@@ -13,6 +13,10 @@ struct Service {
 	std::string runlevel;
 	std::string status;
 
+	void change_status(const char *const st){
+
+	}
+
 	//void print(){
 	//	printf("%p: %s is %s on %s\n", this, name.c_str(), status.c_str(), runlevel.c_str());
 	//}
