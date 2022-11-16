@@ -8,7 +8,12 @@ static bool tui_running;
 
 static size_t scrw, scrh;
 static size_t selection = 0;
-static size_t cursor = 0;
+enum {
+	CUR_RUNLEVEL,
+	CUR_STATUS,
+	CUR_ENUM_END
+};
+static size_t cursor = CUR_STATUS;
 static size_t state = 0;
 
 inline WINDOW* wmain;
@@ -51,12 +56,32 @@ void tui_services(){
 	int lineno = 0;
 	for(int i = 0; i < services.size(); i++){
 		char* buf = services[i]->pretty_render(scrw-2);
-		if(i == selection){
+		if(i == selection) [[ unlikely ]] {
+			int cur_start, cur_len;
+			switch(cursor){
+				case CUR_RUNLEVEL:
+					cur_start = scrw - (services[i]->status.size()+1 + services[i]->runlevel.size()+1 + 2);
+					cur_len = services[i]->runlevel.size();
+					break;
+				case CUR_STATUS:
+					cur_start = scrw - (services[i]->status.size() + 2);
+					cur_len = services[i]->status.size();
+					break;
+			}
+			// Print til cur
 			wattron(wmain, A_BOLD | COLOR_PAIR(COLOR_PAIR_SELECTION));
-		}
-		mvwaddstr(wmain, lineno+1, 1, buf);
-		if(i == selection){
+			mvwaddnstr(wmain, lineno+1, 1, buf, cur_start);
+			wattroff(wmain, COLOR_PAIR(COLOR_PAIR_SELECTION));
+			// Print cur
+			wattron(wmain, COLOR_PAIR(COLOR_PAIR_CURSOR));
+			waddnstr(wmain, buf+cur_start, cur_len);
+			wattroff(wmain, COLOR_PAIR(COLOR_PAIR_CURSOR));
+			// Print rem
+			wattron(wmain, COLOR_PAIR(COLOR_PAIR_SELECTION));
+			waddstr(wmain, buf+cur_start+cur_len);
 			wattroff(wmain, A_BOLD | COLOR_PAIR(COLOR_PAIR_SELECTION));
+		}else [[ likely ]] {
+			mvwaddstr(wmain, lineno+1, 1, buf);
 		}
 		++lineno;
 		delete buf;
@@ -91,6 +116,19 @@ bool tui_control(const char &c){
 				--selection;
 			}else{
 				selection = services.size()-1;
+			}
+			return true;
+		case 'h':
+			if(cursor != 0){
+				--cursor;
+			}else{
+				cursor = CUR_ENUM_END-1;
+			}
+			return true;
+		case 'l':
+			++cursor;
+			if(cursor == CUR_ENUM_END){
+				cursor = 0;
 			}
 			return true;
 	}
