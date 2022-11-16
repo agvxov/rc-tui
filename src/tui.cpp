@@ -102,35 +102,75 @@ void tui_help(){
 	}
 }
 
-bool tui_control(const char &c){
+enum {
+	CONTROL_INITIAL,
+	CONTROL_CMD_MENU
+};
+static int control = CONTROL_INITIAL;
+static MENU* cmd_menu;
+
+bool tui_service_command_menu(const char &c){
 	switch(c){
 		case 'j':
-			if(selection < services.size()-1){
-				++selection;
-			}else{
-				selection = 0;
-			}
+			menu_driver(cmd_menu, REQ_DOWN_ITEM);
 			return true;
 		case 'k':
-			if(selection > 0){
-				--selection;
-			}else{
-				selection = services.size()-1;
-			}
+			menu_driver(cmd_menu, REQ_UP_ITEM);
 			return true;
-		case 'h':
-			if(cursor != 0){
-				--cursor;
-			}else{
-				cursor = CUR_ENUM_END-1;
+	}
+	return false;
+}
+
+bool tui_control(const char &c){
+	switch(control){
+		case CONTROL_INITIAL:
+			switch(c){
+				case 'j':
+					if(selection < services.size()-1){
+						++selection;
+					}else{
+						selection = 0;
+					}
+					return true;
+				case 'k':
+					if(selection > 0){
+						--selection;
+					}else{
+						selection = services.size()-1;
+					}
+					return true;
+				case 'h':
+					if(cursor != 0){
+						--cursor;
+					}else{
+						cursor = CUR_ENUM_END-1;
+					}
+					return true;
+				case 'l':
+					++cursor;
+					if(cursor == CUR_ENUM_END){
+						cursor = 0;
+					}
+					return true;
+				case 'i':
+					control = 1;
+					const char** const &cmd = Service::cmd[strcmp(services[selection]->status.c_str(), "[started]")];	// remember to changing indexing with selection; ?!
+					const int n_cmd = sizeof(*cmd);
+					ITEM** options = (ITEM**)calloc(n_cmd+1, sizeof(ITEM *));
+					for(int i = 0; i < n_cmd; i++){
+						options[i] = new_item(cmd[i], "");
+					}
+					options[n_cmd] = NULL;
+
+					cmd_menu = new_menu(options);
+					post_menu(cmd_menu);
+					refresh();
+					return true;
 			}
-			return true;
-		case 'l':
-			++cursor;
-			if(cursor == CUR_ENUM_END){
-				cursor = 0;
-			}
-			return true;
+			return false;
+		case CONTROL_CMD_MENU:
+			tui_service_command_menu(c);
+			return false;
 	}
 
 	return false;

@@ -7,6 +7,8 @@
 #define MAX_RUNLEVEL_LEN	23
 
 struct Service {
+	static constexpr const char** cmd[] = {(const char *[]){"restart", "stop"}, (const char *[]){"start"}};
+
 	std::string name;
 	std::string runlevel;
 	std::string status;

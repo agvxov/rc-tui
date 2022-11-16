@@ -15,7 +15,7 @@ OUTPUT:=main.out
 .PHONY: main clean run
 
 main: lexer ${OBJ}
-	${COMP} ${OBJ} -o ${OUTPUT} -lfl `pkgconf --libs ncurses`
+	${COMP} ${OBJ} -o ${OUTPUT} -lfl `pkgconf --libs menu` `pkgconf --libs ncurses`
 
 obj/%.o: src/%.cpp
 	${COMP} -c $< -o ${OBJD}/$*.o
