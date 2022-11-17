@@ -13,16 +13,17 @@ enum {
 };
 static size_t cursor = CUR_STATUS;
 static size_t selection = 0;
-static size_t state = 0;
 
 enum {
-	CONTROL_INITIAL,
-	CONTROL_CMD_MENU
+	STATE_INITIAL,
+	STATE_CMD_MENU
 };
-static int control = CONTROL_INITIAL;
+static size_t state = STATE_INITIAL;
 
 static WINDOW* wmain;
 static WINDOW* wmaind;
+static WINDOW* wmenu;
+static WINDOW* wmenud;
 static WINDOW* whelpbar;
 static MENU* cmd_menu;
 
@@ -43,6 +44,7 @@ static inline int windowh(WINDOW* w){
 bool tui_init(){
 	initscr();
 
+	nonl();
 	noecho();
 	curs_set(0);
 
@@ -68,21 +70,46 @@ void tui_quit(){
 	endwin();
 }
 
+static char* tui_render_service(const Service* const s, const size_t &width){
+	char* r;
+
+	asprintf(
+				&r,
+				"%s%*s%*s%*s",
+				s->name.c_str(),
+				(int)(width-(s->name.size()+MAX_RUNLEVEL_LEN+MAX_STATUS_LEN+1)),
+				" ",
+				MAX_RUNLEVEL_LEN,
+				s->runlevel.c_str(),
+				MAX_STATUS_LEN+1,
+				s->status.c_str()
+			);
+
+	return r;
+}
+
+static size_t tui_rendered_service_button_pos(const Service* const s, size_t width){
+	size_t starts[] = {
+			width-(s->status.size()+1 + s->runlevel.size()+1),
+			width - (s->status.size())
+		};
+	return starts[cursor];
+}
+
 static void tui_render_services(){
 	wmove(wmaind, 0, 0);
+	int winw = windoww(wmaind);
 	for(int i = 0; i < services.size(); i++){
-		char* buf = services[i]->pretty_render(windoww(wmaind));
+		char* buf = tui_render_service(services[i], winw);
 		if(i == selection) [[ unlikely ]] {
-			int cur_start,
+			size_t cur_start,
 				cur_len;
-			int winw = windoww(wmaind);
+			cur_start = tui_rendered_service_button_pos(services[i], winw);
 			switch(cursor){
 				case CUR_RUNLEVEL:
-					cur_start = winw - (services[i]->status.size()+1 + services[i]->runlevel.size()+1);
 					cur_len = services[i]->runlevel.size();
 					break;
 				case CUR_STATUS:
-					cur_start = winw - (services[i]->status.size());
 					cur_len = services[i]->status.size();
 					break;
 			}
@@ -106,7 +133,8 @@ static void tui_render_services(){
 }
 
 static const char** HELP_MSG[] = {
-		(char const *[]){"Down [j]", "Up [k]", "Next [h]", "Previous [l]", "Modify [\\n]", NULL}
+		(char const *[]){"Down [j]", "Up [k]", "Next [h]", "Previous [l]", "Modify [\\n]", NULL},
+		(char const *[]){"Down [j]", "Up [k]", "Select [\\n]", "Cancel [esc]", NULL}
 	};
 static void tui_render_help(){
 	werase(whelpbar);
@@ -126,13 +154,18 @@ static bool tui_control_status_menu(const char &c){
 		case 'k':
 			menu_driver(cmd_menu, REQ_UP_ITEM);
 			return true;
+		case '\033':
+			state = STATE_INITIAL;
+			delwin(wmenu);
+			tui_redraw();
+			return true;
 	}
 	return false;
 }
 
 bool tui_control(const char &c){
-	switch(control){
-		case CONTROL_INITIAL:
+	switch(state){
+		case STATE_INITIAL:
 			switch(c){
 				case 'j':
 					if(selection < services.size()-1){
@@ -161,8 +194,8 @@ bool tui_control(const char &c){
 						cursor = 0;
 					}
 					return true;
-				case 'i':
-					control = 1;
+				case '\r':
+					state = STATE_CMD_MENU;
 					// Items
 					const char** const &cmd = Service::cmd[strcmp(services[selection]->status.c_str(), "[started]")];	// remember to changing indexing with selection; ?!
 					const int n_cmd = sizeof(*cmd);
@@ -172,18 +205,22 @@ bool tui_control(const char &c){
 					}
 					options[n_cmd] = NULL;
 					// menu win
-					//WINDOW* wmenu = newwin();
-					//WINDOW* wmenud = derwin(1, 1, windoww(wmenu));
-					//// menu
-					//cmd_menu = new_menu(options);
-					//set_menu_win();
-					//post_menu(cmd_menu);
-					//refresh();
+					const int mstartx = tui_rendered_service_button_pos(services[selection], windoww(wmaind));
+					const int mstarty = wmain->_begy + selection+1 + 1;
+					const int mwidth = (cursor ? services[selection]->status : services[selection]->runlevel).size() + 2;
+					wmenu = newwin(5, mwidth, mstarty, mstartx);
+					wmenud = derwin(wmenu, 1, 1, wmenu->_maxy, wmenu->_maxx);
+					wborder(wmenu, '|', '|', '=', '=', 'O', 'O', 'O', 'O');
+					// menu
+					cmd_menu = new_menu(options);
+					set_menu_win(cmd_menu, wmenu);
+					post_menu(cmd_menu);
+					refresh();
 
 					return true;
 			}
 			return false;
-		case CONTROL_CMD_MENU:
+		case STATE_CMD_MENU:
 			tui_control_status_menu(c);
 			return false;
 	}
@@ -196,6 +233,9 @@ void tui_redraw(){
 	mvwaddstr(wmain, 0, (scrw-(sizeof(TUI_BANNER)-1))/2, TUI_BANNER);
 	//
 	wrefresh(wmain);
+	if(state == STATE_CMD_MENU){
+		wrefresh(wmenu);
+	}
 	//
 	tui_draw();
 }
@@ -205,5 +245,8 @@ void tui_draw(){
 	tui_render_help();
 	//
 	wrefresh(wmaind);
+	if(state == STATE_CMD_MENU){
+		wrefresh(wmenu);
+	}
 	wrefresh(whelpbar);
 }
