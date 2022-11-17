@@ -36,6 +36,9 @@ enum {
 static inline int windoww(WINDOW* w){
 	return (w->_maxx+1 - w->_begx)+1;
 }
+static inline int windowh(WINDOW* w){
+	return (w->_maxy+1 - w->_begy+w->_yoffset)+1;
+}
 
 bool tui_init(){
 	initscr();
@@ -51,7 +54,7 @@ bool tui_init(){
 	init_pair(COLOR_PAIR_HELP, COLOR_BLACK, COLOR_WHITE);
 
 	wmain = newwin(scrh-1, scrw, 0, 0);
-	wmaind = newwin(scrh-1-2, scrw-2, 1, 1);
+	wmaind = derwin(wmain, wmain->_maxy-1, wmain->_maxx-1, 1, 1);
 	whelpbar = newwin(1, scrw, scrh-1, 0);
 
 	refresh();
@@ -68,7 +71,7 @@ void tui_quit(){
 static void tui_render_services(){
 	wmove(wmaind, 0, 0);
 	for(int i = 0; i < services.size(); i++){
-		char* buf = services[i]->pretty_render(scrw-2);
+		char* buf = services[i]->pretty_render(windoww(wmaind));
 		if(i == selection) [[ unlikely ]] {
 			int cur_start,
 				cur_len;
@@ -160,6 +163,7 @@ bool tui_control(const char &c){
 					return true;
 				case 'i':
 					control = 1;
+					// Items
 					const char** const &cmd = Service::cmd[strcmp(services[selection]->status.c_str(), "[started]")];	// remember to changing indexing with selection; ?!
 					const int n_cmd = sizeof(*cmd);
 					ITEM** options = (ITEM**)calloc(n_cmd+1, sizeof(ITEM *));
@@ -167,10 +171,15 @@ bool tui_control(const char &c){
 						options[i] = new_item(cmd[i], "");
 					}
 					options[n_cmd] = NULL;
+					// menu win
+					//WINDOW* wmenu = newwin();
+					//WINDOW* wmenud = derwin(1, 1, windoww(wmenu));
+					//// menu
+					//cmd_menu = new_menu(options);
+					//set_menu_win();
+					//post_menu(cmd_menu);
+					//refresh();
 
-					cmd_menu = new_menu(options);
-					post_menu(cmd_menu);
-					refresh();
 					return true;
 			}
 			return false;
