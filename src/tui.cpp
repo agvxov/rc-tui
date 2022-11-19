@@ -133,7 +133,7 @@ static void tui_render_services(){
 }
 
 static const char** HELP_MSG[] = {
-		(char const *[]){"Down [j]", "Up [k]", "Next [h]", "Previous [l]", "Modify [\\n]", NULL},
+		(char const *[]){"Down [j]", "Up [k]", "Next [h]", "Previous [l]", "Modify [\\n]", "Quit [q]", NULL},
 		(char const *[]){"Down [j]", "Up [k]", "Select [\\n]", "Cancel [esc]", NULL}
 	};
 static void tui_render_help(){
@@ -194,12 +194,14 @@ bool tui_control(const char &c){
 						cursor = 0;
 					}
 					return true;
+				case 'q':
+					abort();
 				case '\r':
 					state = STATE_CMD_MENU;
 					// Items
 					const char** const &cmd = Service::cmd[strcmp(services[selection]->status.c_str(), "[started]")];	// remember to changing indexing with selection; ?!
 					const int n_cmd = sizeof(*cmd);
-					ITEM** options = (ITEM**)calloc(n_cmd+1, sizeof(ITEM *));
+					static ITEM** options = (ITEM**)calloc(n_cmd+1, sizeof(ITEM *));
 					for(int i = 0; i < n_cmd; i++){
 						options[i] = new_item(cmd[i], "");
 					}
@@ -208,12 +210,14 @@ bool tui_control(const char &c){
 					const int mstartx = tui_rendered_service_button_pos(services[selection], windoww(wmaind));
 					const int mstarty = wmain->_begy + selection+1 + 1;
 					const int mwidth = (cursor ? services[selection]->status : services[selection]->runlevel).size() + 2;
-					wmenu = newwin(5, mwidth, mstarty, mstartx);
-					wmenud = derwin(wmenu, 1, 1, wmenu->_maxy, wmenu->_maxx);
+					const int mheight = 5;
+					wmenu = newwin(mheight, mwidth, mstarty, mstartx);
+					wmenud = derwin(wmenu, mheight-2, mwidth-2, 1, 1);
 					wborder(wmenu, '|', '|', '=', '=', 'O', 'O', 'O', 'O');
 					// menu
 					cmd_menu = new_menu(options);
 					set_menu_win(cmd_menu, wmenu);
+					set_menu_sub(cmd_menu, wmenud);
 					post_menu(cmd_menu);
 					refresh();
 
@@ -247,6 +251,7 @@ void tui_draw(){
 	wrefresh(wmaind);
 	if(state == STATE_CMD_MENU){
 		wrefresh(wmenu);
+		wrefresh(wmenud);
 	}
 	wrefresh(whelpbar);
 }
