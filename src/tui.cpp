@@ -213,7 +213,6 @@ bool tui_control(const char &c){
 					const int mheight = 5;
 					wmenu = newwin(mheight, mwidth, mstarty, mstartx);
 					wmenud = derwin(wmenu, mheight-2, mwidth-2, 1, 1);
-					wborder(wmenu, '|', '|', '=', '=', 'O', 'O', 'O', 'O');
 					// menu
 					cmd_menu = new_menu(options);
 					set_menu_win(cmd_menu, wmenu);
@@ -225,8 +224,7 @@ bool tui_control(const char &c){
 			}
 			return false;
 		case STATE_CMD_MENU:
-			tui_control_status_menu(c);
-			return false;
+			return tui_control_status_menu(c);
 	}
 
 	return false;
@@ -250,6 +248,7 @@ void tui_draw(){
 	//
 	wrefresh(wmaind);
 	if(state == STATE_CMD_MENU){
+		wborder(wmenu, '|', '|', '=', '=', 'O', 'O', 'O', 'O');
 		wrefresh(wmenu);
 		wrefresh(wmenud);
 	}
