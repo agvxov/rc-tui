@@ -24,9 +24,9 @@ lexer:
 	flex --header-file=${SRCD}/rc_lexer.h -o ${SRCD}/lex.cpp ${SRCD}/rc_lexer.l
 
 clean:
-	rm ${OBJD}/*
-	rm ${SRCD}/lex.yy.c
-	rm ./${OUTPUT}
+	-rm ${OBJD}/*
+	-rm ${SRCD}/lex.yy.c
+	-rm ./${OUTPUT}
 
 run:
 	./${OUTPUT}
