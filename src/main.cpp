@@ -10,10 +10,12 @@
 using namespace std; 
 
 
+inline std::vector<Service*> services;
+size_t SERVICE_max_name_len = 0;
+
 bool init();
 [[ noreturn ]] void quit(int ignore);
 
-inline std::vector<Service*> services;
 bool running = init();
 
 signed main(int argc, char* argv[]){

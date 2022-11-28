@@ -2,9 +2,11 @@
 #include <string>
 #include <vector>
 #include <string.h>
+#include <unistd.h>
 
-#define MAX_STATUS_LEN		10
-#define MAX_RUNLEVEL_LEN	23
+#define SERVICE_MAX_STATUS_LEN		10
+#define SERVICE_MAX_RUNLEVEL_LEN	23
+extern size_t SERVICE_max_name_len;
 
 struct Service {
 	static constexpr const char** cmd[] = {(const char *[]){"restart", "stop"}, (const char *[]){"start"}};
@@ -12,9 +14,19 @@ struct Service {
 	std::string name;
 	std::string runlevel;
 	std::string status;
+	bool locked = true;
 
-	void change_status(const char *const st){
+	void change_status(const int &st){
+		char *const cmd = strdup(((char**)cmd[(bool)strcmp(this->status.c_str(), "[started]")])[st]);
+		char *const name = strdup(this->name.substr(1, this->name.size()-2).c_str());
+		char* argv[] = {"rc-status", name, cmd, NULL};
 
+		const int cp = fork();
+		if(cp == -1){ return; }
+		this->locked = true;
+		if(cp == 0){
+			execvpe(argv[0], argv, NULL);
+		}
 	}
 
 	//void print(){

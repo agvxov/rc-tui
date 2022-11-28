@@ -42,6 +42,12 @@ static inline int windowh(WINDOW* w){
 }
 
 bool tui_init(){
+	for(auto i : services){
+		if(i->name.size() > SERVICE_max_name_len){
+			SERVICE_max_name_len = i->name.size();
+		}
+	}
+
 	initscr();
 
 	nonl();
@@ -73,15 +79,31 @@ void tui_quit(){
 static char* tui_render_service(const Service* const s, const size_t &width){
 	char* r;
 
+	static const char l[] = "  Locked";
+	auto l_spaceout = []() constexpr {
+										char* const r = (char*)malloc(sizeof(l));
+										memset(r, ' ', sizeof(l)-1);
+										r[sizeof(l)-1] = '\00';
+										return r;
+									};
+	const char* const lstr = (s->locked ? l : l_spaceout());
+
 	asprintf(
 				&r,
-				"%s%*s%*s%*s",
+				"%-*s%s%*s%*s%*s",	/* name,<locked>,<space_padding>,runlevel,status */
+				(int)SERVICE_max_name_len,
 				s->name.c_str(),
-				(int)(width-(s->name.size()+MAX_RUNLEVEL_LEN+MAX_STATUS_LEN+1)),
+				lstr,
+				(int)(width-
+						(SERVICE_max_name_len
+							+(sizeof(l)-1)
+							+SERVICE_MAX_RUNLEVEL_LEN
+							+SERVICE_MAX_STATUS_LEN+1)
+						),
 				" ",
-				MAX_RUNLEVEL_LEN,
+				SERVICE_MAX_RUNLEVEL_LEN,
 				s->runlevel.c_str(),
-				MAX_STATUS_LEN+1,
+				SERVICE_MAX_STATUS_LEN+1,
 				s->status.c_str()
 			);
 
@@ -155,6 +177,12 @@ static bool tui_control_status_menu(const char &c){
 			menu_driver(cmd_menu, REQ_UP_ITEM);
 			return true;
 		case '\033':
+			state = STATE_INITIAL;
+			delwin(wmenu);
+			tui_redraw();
+			return true;
+		case '\r':
+			services[selection][cursor].change_status(item_index(current_item(cmd_menu)));
 			state = STATE_INITIAL;
 			delwin(wmenu);
 			tui_redraw();
