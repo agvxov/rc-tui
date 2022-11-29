@@ -9,7 +9,11 @@
 extern size_t SERVICE_max_name_len;
 
 struct Service {
-	static constexpr const char** cmd[] = {(const char *[]){"restart", "stop"}, (const char *[]){"start"}};
+	static constexpr const
+		char** cmd[] = {
+			(const char *[]){"restart", "stop", NULL},
+			(const char *[]){"start", NULL}
+		};
 
 	std::string name;
 	std::string runlevel;
@@ -17,9 +21,9 @@ struct Service {
 	bool locked = true;
 
 	void change_status(const int &st){
-		char *const cmd = strdup(((char**)cmd[(bool)strcmp(this->status.c_str(), "[started]")])[st]);
+		char *const to_cmd = strdup(((char**)cmd[(bool)strcmp(this->status.c_str(), "[started]")])[st]);
 		char *const name = strdup(this->name.substr(1, this->name.size()-2).c_str());
-		char* argv[] = {"rc-status", name, cmd, NULL};
+		char* argv[] = {"rc-status", name, to_cmd, NULL};
 
 		const int cp = fork();
 		if(cp == -1){ return; }

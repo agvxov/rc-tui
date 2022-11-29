@@ -79,7 +79,7 @@ void tui_quit(){
 static char* tui_render_service(const Service* const s, const size_t &width){
 	char* r;
 
-	static const char l[] = "  Locked";
+	static const char l[] = "   Locked";
 	auto l_spaceout = []() constexpr {
 										char* const r = (char*)malloc(sizeof(l));
 										memset(r, ' ', sizeof(l)-1);
@@ -227,18 +227,21 @@ bool tui_control(const char &c){
 				case '\r':
 					state = STATE_CMD_MENU;
 					// Items
-					const char** const &cmd = Service::cmd[strcmp(services[selection]->status.c_str(), "[started]")];	// remember to changing indexing with selection; ?!
-					const int n_cmd = sizeof(*cmd);
-					static ITEM** options = (ITEM**)calloc(n_cmd+1, sizeof(ITEM *));
+					const char** const &ac_cmd = Service::cmd[strcmp(services[selection]->status.c_str(), "[started]")];	// remember to changing indexing with selection; ?!
+					int n_cmd = 0;
+					while(ac_cmd[n_cmd] != NULL){
+						++n_cmd;
+					}
+					static ITEM** options = (ITEM**)calloc(n_cmd+1, sizeof(ITEM*));
 					for(int i = 0; i < n_cmd; i++){
-						options[i] = new_item(cmd[i], "");
+						options[i] = new_item(ac_cmd[i], "");
 					}
 					options[n_cmd] = NULL;
 					// menu win
 					const int mstartx = tui_rendered_service_button_pos(services[selection], windoww(wmaind));
 					const int mstarty = wmain->_begy + selection+1 + 1;
 					const int mwidth = (cursor ? services[selection]->status : services[selection]->runlevel).size() + 2;
-					const int mheight = 5;
+					const int mheight = n_cmd+2;
 					wmenu = newwin(mheight, mwidth, mstarty, mstartx);
 					wmenud = derwin(wmenu, mheight-2, mwidth-2, 1, 1);
 					// menu
