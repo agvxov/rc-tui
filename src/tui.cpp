@@ -182,7 +182,7 @@ static bool tui_control_status_menu(const char &c){
 			tui_redraw();
 			return true;
 		case '\r':
-			services[selection][cursor].change_status(item_index(current_item(cmd_menu)));
+			services[selection]->change_status(item_index(current_item(cmd_menu)));
 			state = STATE_INITIAL;
 			delwin(wmenu);
 			tui_redraw();
