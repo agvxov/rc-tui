@@ -11,6 +11,7 @@ using namespace std;
 
 
 inline std::vector<Service*> services;
+std::map<Service*, const int> Service::chld_table;
 size_t SERVICE_max_name_len = 0;
 
 bool init();
@@ -65,6 +66,7 @@ bool init(){
 	signal(SIGINT, quit);
 	signal(SIGSEGV, quit);
 	signal(SIGTERM, quit);
+	signal(SIGCHLD, Service::chld);
 
 	// ### Init ncurses ###
 	if(not tui_init()){ return false; }

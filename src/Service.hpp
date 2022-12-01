@@ -1,9 +1,11 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <map>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 
 #define SERVICE_MAX_STATUS_LEN		10
 #define SERVICE_MAX_RUNLEVEL_LEN	23
@@ -15,6 +17,23 @@ struct Service {
 			(const char *[]){"restart", "stop", NULL},
 			(const char *[]){"start", NULL}
 		};
+
+	static std::map<Service*, const int> chld_table;
+
+	static void chld(int ignore){
+		pid_t pid;
+		while((pid = waitpid(-1, NULL, 0)) > 0){
+			auto i = Service::chld_table.begin();
+			while(i != Service::chld_table.end()){
+				if(i->second == pid){
+					(*i).first->locked = false;
+					Service::chld_table.erase(i);
+					break;
+				}
+				++i;
+			}
+		}
+	}
 
 	std::string name;
 	std::string runlevel;
@@ -31,11 +50,14 @@ struct Service {
 		if(cp == -1){ return; }
 		this->locked = true;
 		if(cp == 0){
+			// do a pause to avoid inter process race conditions
 			fclose(stdout);
 			fclose(stderr);
 			int iw = open("debug/debug.log", O_WRONLY | O_CREAT, 0644);
 			int iv = open("debug/debug.log", O_WRONLY | O_CREAT, 0644);
 			execvpe(argv[0], argv, NULL);
+		}else{
+			Service::chld_table.emplace(this, cp);
 		}
 	}
 
