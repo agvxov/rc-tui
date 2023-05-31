@@ -67,6 +67,7 @@ bool init(){
 	signal(SIGSEGV, quit);
 	signal(SIGTERM, quit);
 	signal(SIGCHLD, Service::chld);
+	//signal(SIGWINCH, tui_redraw);
 
 	// ### Init ncurses ###
 	if(not tui_init()){ return false; }

@@ -261,7 +261,7 @@ bool tui_control(const char &c){
 	return false;
 }
 
-void tui_redraw(){
+void tui_redraw(int ignore){
 	box(wmain, 0, 0);
 	mvwaddstr(wmain, 0, (scrw-(sizeof(TUI_BANNER)-1))/2, TUI_BANNER);
 	//

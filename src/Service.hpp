@@ -59,6 +59,7 @@ struct Service {
 		}else{
 			Service::chld_table.emplace(this, cp);
 		}
+		//raise(SIGWINCH);
 	}
 
 	//void print(){
