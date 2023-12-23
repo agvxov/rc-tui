@@ -8,14 +8,17 @@
 %}
 %option noyywrap
 %option nodefault
-%x STATUS
+%x STATUS SWALLOW
+
+identifier	[[:alnum:]]([[:alnum:]]|[-_ /])*[[:alnum:]]
+
 %%
 
-"["([[:alpha:]]|" "|"/")+"]"	{
+"["{identifier}"]"				{
 									//printf("new runlevel: %s\n", yytext);
 									runlevel = yytext;
 								}
-^([[:alnum:]]|"-"|"_")+			{
+^{identifier}					{
 									//printf("service found: %s", yytext);
 									services.push_back(new Service);
 									services.back()->name = yytext; 
@@ -24,13 +27,15 @@
 								}
 =								{ BEGIN STATUS;
 								}
-<STATUS>[[:alpha:]]+ 			{ BEGIN INITIAL;
+\n								{ ; }
+<STATUS>[[:alpha:]]+			{ BEGIN SWALLOW;
 									//printf(" whichs status is: %s\n", yytext);
 									services.back()->status = yytext;
 									services.back()->status = '[' + services.back()->status + ']'; 
 								}
-\n								{  }
-<INITIAL,STATUS>[ \t]*			{  }
+<SWALLOW>.						{ ; }
+<SWALLOW>\n						{ BEGIN INITIAL; }
+<INITIAL,STATUS>[ \t]*			{ ; }
 <INITIAL,STATUS>.				{ yyerror(yytext); }
 
 %%

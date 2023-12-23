@@ -37,7 +37,7 @@ bool init(){
 	int fd[2];
 	int cp;
 	char buf;
-	char* argv[] = {"rc-status", "-f", "ini", NULL};
+	char* argv[] = {"rc-status", "--all", "-f", "ini", NULL};
 	string rcoutput;
 
 	if(pipe(fd) == -1){ return false; }
