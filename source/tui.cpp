@@ -302,6 +302,19 @@ static inline void make_menu(const int w, int y, const int x, const int flip_abo
 	wbkgd(wmenud, COLOR_PAIR(COLOR_PAIR_STD));
 
 	cmd_menu = new_menu(items.elements);
+	/* ITEM stores MENU information internally such as its position in the MENU;
+	 *  new_menu() will fail if it detects that the ITEMs passed in were already assigned;
+	 *  however, in the process it happens to reset the ITEMs;
+	 *  i assume this means the check is actually useless since it breaks the previous owner
+	 *   and does not create a new; someone should check
+	 *  yet, since it resets, it means a second call will succeed;
+	 *  we could statically alloc MENU, but we dont want to perserve cursor location
+	 *   and who knows what, so we dont
+	 */
+	if (not cmd_menu
+	&& errno == E_NOT_CONNECTED) {
+		cmd_menu = new_menu(items.elements);
+	}
 
 	set_menu_win(cmd_menu, wmenu);
 	set_menu_sub(cmd_menu, wmenud);
