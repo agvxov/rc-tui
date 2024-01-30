@@ -1,0 +1,4 @@
+*.out
+object/*
+.gdb_history
+rc-tui
