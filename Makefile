@@ -20,13 +20,13 @@ OBJ:=$(subst .cpp,.o,$(subst ${SRCD},${OBJD},${SRC}))
 
 OUTPUT:=rc-tui
 
-main: lexer ${OBJ}
+main: object/lex.cpp ${OBJ}
 	${LINK.cpp} ${OBJ} -o ${OUTPUT} ${LDLIBS}
 
 object/%.o: source/%.cpp
 	${COMPILE.cpp} $< -o $@
 
-lexer: source/rc_lexer.l
+object/lex.cpp: source/rc_lexer.l
 	${LEX} ${LFLAGS} --header-file=${OBJD}/rc_lexer.h -o ${OBJD}/lex.cpp ${SRCD}/rc_lexer.l
 
 clean:
